@@ -96,39 +96,44 @@ button:hover {
   100% { transform: rotate(360deg); }
 }
 @media print {
-  input, button, h2, h3, .no-print {
-    display: none !important;
-  }
   body {
-    font-size: 18px;  /* Томруулсан */
-    line-height: 1.5; /* Мөр хоорондын зай нэмэгдүүлнэ */
-    background:white;
-    margin:0;
+    margin: 0;
+    padding: 0;
+    background: white;
   }
-  
-  .container {
-    padding:0;
-    box-shadow:none;
-    border:none;
-    max-width:100%;
-  }
-  .receipt {
-    font-size: 18px;
-    border:none;
-    page-break-inside:avoid;
-    margin:0;
-  }
-  .batch-container,
-  .batch-container h4 {
+
+  /* Зөвхөн баримтыг хэвлэх */
+  #mainForm,
+  .loading,
+  .print-buttons,
+  input,
+  button,
+  h2,
+  h3,
+  .no-print {
     display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
+
+  #resultArea {
+    display: block !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  .receipt {
+    font-size: 22px;
+    page-break-inside: avoid;
+  }
+
   @page {
-    margin:10mm;
-  }
-  .page-break {
-    page-break-after: always;
+    margin: 12mm; /* захын хэмжээ */
   }
 }
+
+
 </style>
 </head>
 <body>
@@ -249,14 +254,19 @@ function generateReceipt() {
     return;
   }
 
-  let totalGoats = 0, totalWeight = 0, details = "";
-  counts.forEach((c, i) => {
-    const w = weights[i] || 0;
-    totalGoats += c;
-    totalWeight += w;
-    const avg = (w / c).toFixed(2);
-    details += `${i+1}-р багц: ${c} ямаа, нийт жин ${w} кг, дундаж = ${avg} кг\n`;
-  });
+let totalGoats = 0, totalWeight = 0;
+let weightList = [];
+
+counts.forEach((c, i) => {
+  const w = weights[i] || 0;
+  totalGoats += c;
+  totalWeight += w;
+  weightList.push(w.toFixed(1)); // нэг оронгийн нарийвчлалтай
+});
+
+// Жингүүдийг нэг мөрөнд цэгээр тусгаарласан текст
+let details = "Жингүүд: " + weightList.join(", ");
+
 
   const avgTotal = (totalWeight / totalGoats).toFixed(2);
   const limit = parseFloat(document.getElementById("avgLimit").value) || 17;
@@ -299,7 +309,7 @@ function generateReceipt() {
         <p><strong>Малчны нэр:</strong> ${herder}</p>
         <p><strong>Дансны дугаар:</strong> ${account}</p>
         <p><strong>Утас:</strong> ${phone}</p>
-        <pre><strong>${details}</pre></strong>
+        <p><strong>${details}</strong></p>
         <p><strong>Нийт ямааны тоо:</strong> ${totalGoats}</p>
         <p><strong>Нийт жин:</strong> ${totalWeight} кг</p>
         <p><strong>Дундаж жин:</strong> ${avgTotal} кг × ${price.toLocaleString()} ₮ = ${totalSum.toLocaleString()} ₮</p>
