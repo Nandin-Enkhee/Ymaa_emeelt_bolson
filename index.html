@@ -25,6 +25,18 @@ h2, h3 {
   text-align:center;
   color:#6f4e37;
 }
+.form-group {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.form-group h4 {
+  margin-top: 0;
+  color: #6f4e37;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
 input, button {
   width:100%;
   padding:12px;
@@ -43,6 +55,12 @@ button {
 }
 button:hover {
   background-color:#5a3e2b;
+}
+button.secondary {
+  background-color: #4a5568;
+}
+button.secondary:hover {
+  background-color: #2d3748;
 }
 .receipt {
   border:1px solid #e2e8f0;
@@ -138,30 +156,38 @@ button:hover {
 <div class="container" id="mainForm">
   <h2>Ямааны бүртгэлийн систем</h2>
 
-  <input type="date" id="date">
-  <input type="text" id="herder" placeholder="Малчны нэр">
-  <input type="text" id="account" placeholder="Дансны дугаар">
-  <input type="text" id="phone" placeholder="Утасны дугаар">
+  <div class="form-group">
+    <h4>Үндсэн мэдээлэл</h4>
+    <input type="date" id="date" class="tabable-input">
+    <input type="text" id="herder" placeholder="Малчны нэр" class="tabable-input">
+    <input type="text" id="account" placeholder="Дансны дугаар" class="tabable-input">
+    <input type="text" id="phone" placeholder="Утасны дугаар" class="tabable-input">
+  </div>
 
-  <input type="number" id="goatCount" placeholder="Нийт ямааны тоо">
-  <input type="number" id="batchSize" placeholder="Багцын хэмжээ (жишээ нь: 5)">
-  <button onclick="generateBatchFields()">Багцын талбар үүсгэх</button>
+  <div class="form-group">
+    <h4>Ямааны тоо</h4>
+    <input type="number" id="goatCount" placeholder="Нийт ямааны тоо" class="tabable-input">
+    <input type="number" id="batchSize" placeholder="Багцын хэмжээ (жишээ нь: 5)" class="tabable-input">
+    <button onclick="generateBatchFields()">Багцын талбар үүсгэх</button>
+  </div>
 
   <div id="batchFields"></div>
 
-  <h3>Үнэ бодох тохиргоо</h3>
-  <input type="number" id="avgLimit" placeholder="Дундаж жингийн босго (жишээ: 17)">
-  <input type="number" id="priceAbove" placeholder="Босгоос дээш ₮">
-  <input type="number" id="priceBelow" placeholder="Босгоос доош ₮">
-  <input type="number" id="slaughterFee" placeholder="1 ямааны бойны хөлс (₮)">
-  
-  <!-- Зөрүү нэмэх талбар -->
-  <input type="number" id="difference" placeholder="Зөрүү (₮)">
+  <div class="form-group">
+    <h4>Үнэ бодох тохиргоо</h4>
+    <input type="number" id="avgLimit" placeholder="Дундаж жингийн босго (жишээ: 17)" class="tabable-input">
+    <input type="number" id="priceAbove" placeholder="Босгоос дээш ₮" class="tabable-input">
+    <input type="number" id="priceBelow" placeholder="Босгоос доош ₮" class="tabable-input">
+    <input type="number" id="slaughterFee" placeholder="1 ямааны бойны хөлс (₮)" class="tabable-input">
+    
+    <!-- Зөрүү нэмэх талбар -->
+    <input type="number" id="difference" placeholder="Зөрүү (₮)" class="tabable-input">
+  </div>
 
   <div class="print-buttons">
     <button id="calculateBtn" onclick="generateReceipt()">Бодох & Илгээх</button>
     <button onclick="window.print()">Хэвлэх</button>
-    <button onclick="resetForm()">Цэвэрлэх</button>
+    <button class="secondary" onclick="resetForm()">Цэвэрлэх</button>
   </div>
 </div>
 
@@ -173,38 +199,38 @@ button:hover {
 <div id="resultArea"></div>
 
 <script>
-// Багцын жин оруулах талбарууд дээр Enter шилжих функцийг тодорхойлсон
-function setupBatchWeightNavigation() {
-  const weightInputs = document.querySelectorAll('.batchWeight');
+// Бүх input талбарууд дээр Enter дарж дараагийн талбар луу шилжих
+function setupInputNavigation() {
+  const inputs = document.querySelectorAll('.tabable-input, .batchWeight');
   
-  weightInputs.forEach((input, index) => {
-    // Хуучин event listener-үүдийг устгах
-    input.removeEventListener('keydown', handleBatchWeightEnter);
-    // Шинэ event listener нэмэх
-    input.addEventListener('keydown', handleBatchWeightEnter);
+  inputs.forEach((input, index) => {
+    input.removeEventListener('keydown', handleInputEnter);
+    input.addEventListener('keydown', handleInputEnter);
   });
 }
 
-// Багцын жин оруулах талбарууд дээрх Enter товчлуурыг боловсруулах функц
-function handleBatchWeightEnter(e) {
+// Input талбарууд дээрх Enter товчлуурыг боловсруулах функц
+function handleInputEnter(e) {
   if (e.key === 'Enter') {
     e.preventDefault();
     
-    const weightInputs = Array.from(document.querySelectorAll('.batchWeight'));
-    const currentIndex = weightInputs.indexOf(e.target);
+    const inputs = Array.from(document.querySelectorAll('.tabable-input, .batchWeight'));
+    const currentIndex = inputs.indexOf(e.target);
     
-    if (currentIndex < weightInputs.length - 1) {
-      // Дараагийн жин оруулах талбар луу шилжих
-      weightInputs[currentIndex + 1].focus();
+    if (currentIndex < inputs.length - 1) {
+      // Дараагийн input талбар луу шилжих
+      inputs[currentIndex + 1].focus();
     } else {
-      // Хамгийн сүүлийн жин оруулах талбар дээр Enter дарвал дундаж жингийн босго талбар луу шилжих
-      document.getElementById('avgLimit').focus();
+      // Хамгийн сүүлийн input талбар дээр Enter дарвал "Бодох & Илгээх" товчлуур дээр фокусах
+      document.getElementById('calculateBtn').focus();
     }
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("date").value = new Date().toISOString().split("T")[0];
+  // Анхны input талбаруудад event listener нэмэх
+  setupInputNavigation();
 });
 
 function generateBatchFields() {
@@ -235,7 +261,7 @@ function generateBatchFields() {
   }
   
   // Шинээр үүссэн жин оруулах талбаруудад Enter шилжилтийн event нэмэх
-  setupBatchWeightNavigation();
+  setupInputNavigation();
   
   // Эхний жин оруулах талбар дээр фокусах
   const firstWeightInput = document.querySelector('.batchWeight');
@@ -360,7 +386,7 @@ function generateReceipt() {
         <p><strong>${details}</strong></p>
         <p><strong>Нийт ямааны тоо:</strong> ${totalGoats}</p>
         <p><strong>Нийт жин:</strong> ${totalWeight} кг</p>
-        <p><strong>Тооцоо:</strong> ${totalWeight} кг × ${price.toLocaleString()} ₮ = ${(totalWeight * price).toLocaleString()} ₮</p>
+        <p><strong>Тооцоо:</strong> ${avgTotal} кг × ${price.toLocaleString()} ₮ = ${(totalWeight * price).toLocaleString()} ₮</p>
         <p><strong>Зөрүү:</strong> ${totalGoats} × ${difference.toLocaleString()} ₮ = +${differenceAmount.toLocaleString()} ₮</p>
         <p><strong>Бойны хөлс:</strong> ${totalGoats} × ${slaughterPerHead.toLocaleString()} ₮ = -${slaughterFee.toLocaleString()} ₮</p>
         <p><strong>Нийт дүн:</strong> ${(totalWeight * price).toLocaleString()} ₮ + ${differenceAmount.toLocaleString()} ₮ - ${slaughterFee.toLocaleString()} ₮ = ${finalSum.toLocaleString()} ₮</p>
