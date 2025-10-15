@@ -132,8 +132,6 @@ button:hover {
     margin: 12mm; /* захын хэмжээ */
   }
 }
-
-
 </style>
 </head>
 <body>
@@ -156,6 +154,9 @@ button:hover {
   <input type="number" id="priceAbove" placeholder="Босгоос дээш ₮">
   <input type="number" id="priceBelow" placeholder="Босгоос доош ₮">
   <input type="number" id="slaughterFee" placeholder="1 ямааны бойны хөлс (₮)">
+  
+  <!-- Зөрүү нэмэх талбар -->
+  <input type="number" id="difference" placeholder="Зөрүү (₮)">
 
   <div class="print-buttons">
     <button id="calculateBtn" onclick="generateReceipt()">Бодох & Илгээх</button>
@@ -172,6 +173,36 @@ button:hover {
 <div id="resultArea"></div>
 
 <script>
+// Багцын жин оруулах талбарууд дээр Enter шилжих функцийг тодорхойлсон
+function setupBatchWeightNavigation() {
+  const weightInputs = document.querySelectorAll('.batchWeight');
+  
+  weightInputs.forEach((input, index) => {
+    // Хуучин event listener-үүдийг устгах
+    input.removeEventListener('keydown', handleBatchWeightEnter);
+    // Шинэ event listener нэмэх
+    input.addEventListener('keydown', handleBatchWeightEnter);
+  });
+}
+
+// Багцын жин оруулах талбарууд дээрх Enter товчлуурыг боловсруулах функц
+function handleBatchWeightEnter(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    
+    const weightInputs = Array.from(document.querySelectorAll('.batchWeight'));
+    const currentIndex = weightInputs.indexOf(e.target);
+    
+    if (currentIndex < weightInputs.length - 1) {
+      // Дараагийн жин оруулах талбар луу шилжих
+      weightInputs[currentIndex + 1].focus();
+    } else {
+      // Хамгийн сүүлийн жин оруулах талбар дээр Enter дарвал дундаж жингийн босго талбар луу шилжих
+      document.getElementById('avgLimit').focus();
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("date").value = new Date().toISOString().split("T")[0];
 });
@@ -201,6 +232,15 @@ function generateBatchFields() {
       <input type="hidden" class="batchCount" value="${count}">
     `;
     container.appendChild(batchDiv);
+  }
+  
+  // Шинээр үүссэн жин оруулах талбаруудад Enter шилжилтийн event нэмэх
+  setupBatchWeightNavigation();
+  
+  // Эхний жин оруулах талбар дээр фокусах
+  const firstWeightInput = document.querySelector('.batchWeight');
+  if (firstWeightInput) {
+    firstWeightInput.focus();
   }
 }
 
@@ -242,6 +282,9 @@ function generateReceipt() {
 
   const counts = Array.from(document.getElementsByClassName("batchCount")).map(el => parseInt(el.value));
   const weights = Array.from(document.getElementsByClassName("batchWeight")).map(el => parseFloat(el.value));
+  
+  // Зөрүү утгыг авч байна
+  const difference = parseFloat(document.getElementById("difference").value) || 0;
 
   // Баталгаажуулалт
   if (!date || !herder || !account || !phone) {
@@ -254,26 +297,29 @@ function generateReceipt() {
     return;
   }
 
-let totalGoats = 0, totalWeight = 0;
-let weightList = [];
+  let totalGoats = 0, totalWeight = 0;
+  let weightList = [];
 
-counts.forEach((c, i) => {
-  const w = weights[i] || 0;
-  totalGoats += c;
-  totalWeight += w;
-  weightList.push(w.toFixed(1)); // нэг оронгийн нарийвчлалтай
-});
+  counts.forEach((c, i) => {
+    const w = weights[i] || 0;
+    totalGoats += c;
+    totalWeight += w;
+    weightList.push(w.toFixed(1)); // нэг оронгийн нарийвчлалтай
+  });
 
-// Жингүүдийг нэг мөрөнд цэгээр тусгаарласан текст
-let details = "Жингүүд: " + weightList.join(", ");
-
+  // Жингүүдийг нэг мөрөнд цэгээр тусгаарласан текст
+  let details = "Жингүүд: " + weightList.join(", ");
 
   const avgTotal = (totalWeight / totalGoats).toFixed(2);
   const limit = parseFloat(document.getElementById("avgLimit").value) || 17;
   const priceAbove = parseFloat(document.getElementById("priceAbove").value) || 0;
   const priceBelow = parseFloat(document.getElementById("priceBelow").value) || 0;
   const price = (avgTotal >= limit) ? priceAbove : priceBelow;
-  const totalSum = totalWeight * price;
+  
+  // Зөрүүгээр үржүүлсэн ямааны тооны дүнг нэмэх
+  const differenceAmount = totalGoats * difference;
+  const totalSum = (totalWeight * price) + differenceAmount;
+  
   const slaughterPerHead = parseFloat(document.getElementById("slaughterFee").value) || 0;
   const slaughterFee = totalGoats * slaughterPerHead;
   const finalSum = totalSum - slaughterFee;
@@ -288,6 +334,8 @@ let details = "Жингүүд: " + weightList.join(", ");
     totalWeight: totalWeight,
     avgWeight: avgTotal,
     price: price,
+    difference: difference,
+    differenceAmount: differenceAmount,
     totalSum: totalSum,
     slaughterFee: slaughterFee,
     finalSum: finalSum,
@@ -312,9 +360,10 @@ let details = "Жингүүд: " + weightList.join(", ");
         <p><strong>${details}</strong></p>
         <p><strong>Нийт ямааны тоо:</strong> ${totalGoats}</p>
         <p><strong>Нийт жин:</strong> ${totalWeight} кг</p>
-        <p><strong>Дундаж жин:</strong> ${avgTotal} кг × ${price.toLocaleString()} ₮ = ${totalSum.toLocaleString()} ₮</p>
+        <p><strong>Тооцоо:</strong> ${totalWeight} кг × ${price.toLocaleString()} ₮ = ${(totalWeight * price).toLocaleString()} ₮</p>
+        <p><strong>Зөрүү:</strong> ${totalGoats} × ${difference.toLocaleString()} ₮ = +${differenceAmount.toLocaleString()} ₮</p>
         <p><strong>Бойны хөлс:</strong> ${totalGoats} × ${slaughterPerHead.toLocaleString()} ₮ = -${slaughterFee.toLocaleString()} ₮</p>
-        <p>Нийт дүн: ${totalSum.toLocaleString()} ₮ - ${slaughterFee.toLocaleString()} ₮ = ${finalSum.toLocaleString()} ₮</p>
+        <p><strong>Нийт дүн:</strong> ${(totalWeight * price).toLocaleString()} ₮ + ${differenceAmount.toLocaleString()} ₮ - ${slaughterFee.toLocaleString()} ₮ = ${finalSum.toLocaleString()} ₮</p>
         <p>Малчны гарын үсэг: _________________________________</p>
         <p>Хүлээн авсан: Эмээлт Эрдэнэ Трейд ХХК</p>
       </div>
