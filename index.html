@@ -270,35 +270,23 @@ function generateBatchFields() {
   }
 }
 
-async function sendToSheet(data) {
-  try {
-    // Google Apps Script Web App URL - энд өөрийн URL-ээ оруулна уу
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbz62KWI95Ikued1u90jOrOHgoc2uqhazpffMwL1sYt5RJKDvIqdCscCjzgpV_-o2vB95Q/exec';
-    
-    document.getElementById('loading').style.display = 'block';
-    
-    const response = await fetch(scriptURL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(data)
-    });
-    
-    const result = await response.json();
+function sendToSheet(data) {
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbz62KWI95Ikued1u90jOrOHgoc2uqhazpffMwL1sYt5RJKDvIqdCscCjzgpV_-o2vB95Q/exec';
+  
+  document.getElementById('loading').style.display = 'block';
+  
+  fetch(scriptURL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(data)
+  }).then(() => {
     document.getElementById('loading').style.display = 'none';
-    
-    if (result.status === 'success') {
-      alert("Мэдээлэл амжилттай Google Sheets рүү хадгалагдлаа!");
-    } else {
-      throw new Error(result.message);
-    }
-  } catch (error) {
+    alert("✅ Амжилттай хадгалагдлаа!");
+  }).catch(() => {
     document.getElementById('loading').style.display = 'none';
-    console.error('Алдаа:', error);
-    alert("Алдаа гарлаа: " + error.message);
-  }
+    alert("❌ Сүлжээний алдаа гарлаа!");
+  });
 }
 
 function generateReceipt() {
