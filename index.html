@@ -62,6 +62,16 @@ button.secondary {
 button.secondary:hover {
   background-color: #2d3748;
 }
+/* ---- Гарал үүслийн код ---- */
+#originBtn {
+  background-color: #0f766e;
+}
+#originBtn:hover {
+  background-color: #115e59;
+}
+#originWrap {
+  display: none;
+}
 .receipt {
   border:1px solid #e2e8f0;
   padding:16px;
@@ -162,6 +172,12 @@ button.secondary:hover {
     <input type="text" id="herder" placeholder="Малчны нэр" class="tabable-input">
     <input type="text" id="account" placeholder="Дансны дугаар" class="tabable-input">
     <input type="text" id="phone" placeholder="Утасны дугаар" class="tabable-input">
+
+    <!-- Малын гарал үүслийн код -->
+    <button id="originBtn" onclick="toggleOriginField()">+ Гарал үүслийн код бичих</button>
+    <div id="originWrap">
+      <input type="text" id="originCode" placeholder="Малын гарал үүслийн код" class="tabable-input">
+    </div>
   </div>
 
   <div class="form-group">
@@ -199,6 +215,24 @@ button.secondary:hover {
 <div id="resultArea"></div>
 
 <script>
+// ---------- Гарал үүслийн код ----------
+function toggleOriginField() {
+  const wrap = document.getElementById('originWrap');
+  const btn = document.getElementById('originBtn');
+  const input = document.getElementById('originCode');
+
+  if (wrap.style.display === 'block') {
+    // Нуухад бичсэн кодыг арилгана
+    wrap.style.display = 'none';
+    input.value = '';
+    btn.innerText = '+ Гарал үүслийн код бичих';
+  } else {
+    wrap.style.display = 'block';
+    btn.innerText = '− Гарал үүслийн код хасах';
+    input.focus();
+  }
+}
+
 // Бүх input талбарууд дээр Enter дарж дараагийн талбар луу шилжих
 function setupInputNavigation() {
   const inputs = document.querySelectorAll('.tabable-input, .batchWeight');
@@ -214,10 +248,12 @@ function handleInputEnter(e) {
   if (e.key === 'Enter') {
     e.preventDefault();
     
-    const inputs = Array.from(document.querySelectorAll('.tabable-input, .batchWeight'));
+    // Зөвхөн харагдаж байгаа талбаруудаар шилжинэ (нуусан кодын талбарыг алгасна)
+    const inputs = Array.from(document.querySelectorAll('.tabable-input, .batchWeight'))
+      .filter(el => el.offsetParent !== null);
     const currentIndex = inputs.indexOf(e.target);
     
-    if (currentIndex < inputs.length - 1) {
+    if (currentIndex > -1 && currentIndex < inputs.length - 1) {
       // Дараагийн input талбар луу шилжих
       inputs[currentIndex + 1].focus();
     } else {
@@ -294,6 +330,7 @@ function generateReceipt() {
   const herder = document.getElementById("herder").value;
   const account = document.getElementById("account").value;
   const phone = document.getElementById("phone").value;
+  const originCode = document.getElementById("originCode").value.trim();
 
   const counts = Array.from(document.getElementsByClassName("batchCount")).map(el => parseInt(el.value));
   const weights = Array.from(document.getElementsByClassName("batchWeight")).map(el => parseFloat(el.value));
@@ -345,6 +382,7 @@ function generateReceipt() {
     herder: herder,
     account: account,
     phone: phone,
+    originCode: originCode,   // гарал үүслийн код (бичээгүй бол хоосон)
     totalGoats: totalGoats,
     totalWeight: totalWeight,
     avgWeight: avgTotal,
@@ -356,6 +394,10 @@ function generateReceipt() {
     finalSum: finalSum,
     details: details
   };
+
+  const originLine = originCode
+    ? `<p><strong>Гарал үүслийн код:</strong> ${originCode}</p>`
+    : '';
 
   // Receipt үүсгэх
   let receipts="";
@@ -372,6 +414,7 @@ function generateReceipt() {
         <p><strong>Малчны нэр:</strong> ${herder}</p>
         <p><strong>Дансны дугаар:</strong> ${account}</p>
         <p><strong>Утас:</strong> ${phone}</p>
+        ${originLine}
         <p><strong>${details}</strong></p>
         <p><strong>Нийт ямааны тоо:</strong> ${totalGoats}</p>
         <p><strong>Нийт жин:</strong> ${totalWeight} кг</p>
